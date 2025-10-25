@@ -188,8 +188,9 @@ export default function EvaluatePage() {
       } else {
         setError(data.data.saveRepositoryEvaluation.message || '保存に失敗しました');
       }
-    } catch (err: any) {
-      setError(`保存に失敗しました: ${err.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(`保存に失敗しました: ${message}`);
     } finally {
       setSaving(false);
     }

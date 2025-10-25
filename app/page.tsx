@@ -59,6 +59,9 @@ export default async function AdminPage() {
         : "管理用データの取得に失敗しました";
   }
 
+  const repositories =
+    data?.repositories?.filter((repo) => repo.hasDockerfile) ?? [];
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="bg-slate-900 px-6 py-4 text-white">
@@ -194,7 +197,7 @@ export default async function AdminPage() {
 
         <section className="space-y-4 pb-10">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            リポジトリ一覧 (上位50件)
+            リポジトリ一覧 (Dockerfileあり)
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
@@ -221,8 +224,8 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.repositories?.length ? (
-                  data.repositories.map((repo) => (
+                {repositories.length ? (
+                  repositories.map((repo) => (
                     <tr key={repo.id} className="border-t border-slate-200 last:border-b">
                       <td className="px-4 py-3 text-sm">{repo.id}</td>
                       <td className="px-4 py-3 text-sm">{repo.nameWithOwner}</td>
@@ -251,7 +254,7 @@ export default async function AdminPage() {
                       className="px-4 py-4 text-center text-sm text-slate-500"
                       colSpan={6}
                     >
-                      登録済みのリポジトリはありません。
+                      Dockerfileを持つリポジトリは登録されていません。
                     </td>
                   </tr>
                 )}
