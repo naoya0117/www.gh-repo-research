@@ -28,6 +28,81 @@ function errorState(message: string): FormState {
   return { status: "error", message };
 }
 
+export async function createCheckQueryAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const name = formData.get("name");
+  const description = formData.get("description");
+
+  if (typeof name !== "string" || !name.trim()) {
+    return errorState("名前は必須です");
+  }
+
+  const params = new URLSearchParams();
+  params.set("name", name.trim());
+  if (typeof description === "string" && description.trim()) {
+    params.set("description", description.trim());
+  }
+
+  const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8080";
+  const endpoint = `${apiBaseUrl.replace(/\/$/, "")}/admin/check-queries`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "text/html",
+      },
+      body: params.toString(),
+      redirect: "manual",
+    });
+
+    if (response.status === 303) {
+      let message = "チェッククエリを登録しました";
+      const location = response.headers.get("location");
+
+      if (location) {
+        try {
+          const redirected = new URL(location, endpoint);
+          const flash = redirected.searchParams.get("flash");
+          if (flash) {
+            message = flash;
+          }
+        } catch {
+          // ignore invalid redirect values and fall back to default message
+        }
+      }
+
+      revalidatePath("/");
+      return successState(message);
+    }
+
+    const rawHtml = await response.text().catch(() => null);
+    if (rawHtml) {
+      const errorMatch = rawHtml.match(/<div class="error">(.*?)<\/div>/s);
+      if (errorMatch?.[1]) {
+        const sanitized = errorMatch[1]
+          .replace(/<[^>]*>/g, "")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .trim();
+        if (sanitized) {
+          return errorState(sanitized);
+        }
+      }
+    }
+
+    return errorState("チェッククエリの登録に失敗しました");
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "チェッククエリの登録に失敗しました";
+    return errorState(message);
+  }
+}
+
 export async function createCheckResultAction(
   _prevState: FormState,
   formData: FormData,
