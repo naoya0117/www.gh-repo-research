@@ -20,6 +20,8 @@ export type Repository = {
   primaryLanguage?: string | null;
   hasDockerfile: boolean;
   createdAt: string;
+  isWebApp?: boolean | null;
+  webAppCheckedAt?: string | null;
 };
 
 export type CheckResult = {

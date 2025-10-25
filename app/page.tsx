@@ -5,7 +5,11 @@ import type { AdminDashboardData } from "@/lib/adminTypes";
 
 export const revalidate = 0;
 
-function formatDateTime(value: string) {
+function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return "-";
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "-";
@@ -61,6 +65,13 @@ export default async function AdminPage() {
 
   const repositories =
     data?.repositories?.filter((repo) => repo.hasDockerfile) ?? [];
+
+  const evaluatedRepositories = repositories.filter(
+    (repo) => repo.isWebApp !== null && repo.isWebApp !== undefined
+  );
+  const pendingRepositories = repositories.filter(
+    (repo) => repo.isWebApp === null || repo.isWebApp === undefined
+  );
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -195,9 +206,9 @@ export default async function AdminPage() {
           </div>
         </section>
 
-        <section className="space-y-4 pb-10">
+        <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            リポジトリ一覧 (Dockerfileあり)
+            評価済みリポジトリ (Dockerfileあり)
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
@@ -216,7 +227,10 @@ export default async function AdminPage() {
                     主要言語
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    Dockerfile
+                    Webアプリ判定
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    判定日時
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     操作
@@ -224,8 +238,8 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {repositories.length ? (
-                  repositories.map((repo) => (
+                {evaluatedRepositories.length ? (
+                  evaluatedRepositories.map((repo) => (
                     <tr key={repo.id} className="border-t border-slate-200 last:border-b">
                       <td className="px-4 py-3 text-sm">{repo.id}</td>
                       <td className="px-4 py-3 text-sm">{repo.nameWithOwner}</td>
@@ -236,7 +250,72 @@ export default async function AdminPage() {
                         {repo.primaryLanguage ?? "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {repo.hasDockerfile ? "Yes" : "No"}
+                        {boolLabel(repo.isWebApp)}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatDateTime(repo.webAppCheckedAt)}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link
+                          href={`/evaluate?id=${repo.id}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          再評価
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="border-t border-slate-200">
+                    <td
+                      className="px-4 py-4 text-center text-sm text-slate-500"
+                      colSpan={7}
+                    >
+                      Dockerfileを持つ評価済みリポジトリはありません。
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="space-y-4 pb-10">
+          <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
+            未評価リポジトリ (Dockerfileあり)
+          </h2>
+          <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+            <table className="min-w-full">
+              <thead className="bg-slate-100 text-left">
+                <tr>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    Name With Owner
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    スター数
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    主要言語
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    操作
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingRepositories.length ? (
+                  pendingRepositories.map((repo) => (
+                    <tr key={repo.id} className="border-t border-slate-200 last:border-b">
+                      <td className="px-4 py-3 text-sm">{repo.id}</td>
+                      <td className="px-4 py-3 text-sm">{repo.nameWithOwner}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {repo.stargazerCount.toLocaleString("ja-JP")}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {repo.primaryLanguage ?? "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Link
@@ -252,9 +331,9 @@ export default async function AdminPage() {
                   <tr className="border-t border-slate-200">
                     <td
                       className="px-4 py-4 text-center text-sm text-slate-500"
-                      colSpan={6}
+                      colSpan={5}
                     >
-                      Dockerfileを持つリポジトリは登録されていません。
+                      Dockerfileを持つ未評価リポジトリはありません。
                     </td>
                   </tr>
                 )}

@@ -19,6 +19,8 @@ const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
         primaryLanguage
         hasDockerfile
         createdAt
+        isWebApp
+        webAppCheckedAt
       }
       checkResults {
         id
