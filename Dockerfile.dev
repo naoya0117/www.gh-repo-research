@@ -8,7 +8,6 @@ RUN (getent passwd ${UID} && /usr/sbin/userdel -r $(getent passwd ${UID} | cut -
   /usr/sbin/useradd -u ${UID} -g ${GID} -m -s /bin/bash nonroot
 
 COPY --chmod=755 ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY -
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 USER nonroot
@@ -17,4 +16,3 @@ WORKDIR /app
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]
-
