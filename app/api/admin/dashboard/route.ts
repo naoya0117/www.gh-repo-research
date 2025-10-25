@@ -6,7 +6,7 @@ import { graphqlRequest } from "@/lib/graphql";
 const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
   query AdminDashboard($limit: Int) {
     adminDashboard(limit: $limit) {
-      checkQueries {
+      patterns {
         id
         name
         description
@@ -20,17 +20,15 @@ const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
         hasDockerfile
         createdAt
       }
-      myChecks {
-        repositoryID
-        repositoryName
-        checkQueryID
-        checkQueryName
+      checkResults {
+        id
+        repositoryId
+        checkItemId
         result
         memo
+        checkedAt
         updatedAt
-        isWebApp
       }
-      resultOptions
     }
   }
 `;

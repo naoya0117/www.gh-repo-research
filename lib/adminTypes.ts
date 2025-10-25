@@ -1,5 +1,13 @@
-export type CheckQuery = {
+export type K8sPattern = {
   id: number;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+};
+
+export type CheckItem = {
+  id: number;
+  patternId: number;
   name: string;
   description?: string | null;
   createdAt: string;
@@ -14,22 +22,18 @@ export type Repository = {
   createdAt: string;
 };
 
-export type MyCheck = {
-  repositoryID: number;
-  repositoryName: string;
-  checkQueryID: number;
-  checkQueryName: string;
-  result: string;
+export type CheckResult = {
+  id: number;
+  repositoryId: number;
+  checkItemId: number;
+  result: boolean;
   memo?: string | null;
+  checkedAt: string;
   updatedAt: string;
-  isWebApp?: boolean | null;
 };
 
 export type AdminDashboardData = {
-  checkQueries: CheckQuery[];
+  patterns: K8sPattern[];
   repositories: Repository[];
-  myChecks: MyCheck[];
-  resultOptions: string[];
+  checkResults: CheckResult[];
 };
-
-export const DEFAULT_RESULT_OPTIONS = ["○", "×", "△"] as const;

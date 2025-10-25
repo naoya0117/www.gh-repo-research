@@ -1,11 +1,6 @@
 import { headers } from "next/headers";
 
-import { CheckQueryForm } from "./_components/CheckQueryForm";
-import { CheckResultForm } from "./_components/CheckResultForm";
-import {
-  AdminDashboardData,
-  DEFAULT_RESULT_OPTIONS,
-} from "@/lib/adminTypes";
+import type { AdminDashboardData } from "@/lib/adminTypes";
 
 export const revalidate = 0;
 
@@ -31,7 +26,7 @@ function boolLabel(value: boolean | null | undefined) {
 }
 
 export default async function AdminPage() {
-  const headerList = headers();
+  const headerList = await headers();
   const host = headerList.get("host") ?? "localhost:3000";
   const protocol =
     headerList.get("x-forwarded-proto") ??
@@ -63,12 +58,10 @@ export default async function AdminPage() {
         : "管理用データの取得に失敗しました";
   }
 
-  const resultOptions = data?.resultOptions ?? Array.from(DEFAULT_RESULT_OPTIONS);
-
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="bg-slate-900 px-6 py-4 text-white">
-        <h1 className="text-2xl font-semibold">チェッククエリ管理</h1>
+        <h1 className="text-2xl font-semibold">Kubernetes パターン分析</h1>
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-8">
@@ -78,13 +71,9 @@ export default async function AdminPage() {
           </div>
         ) : null}
 
-        <CheckQueryForm />
-
-        <CheckResultForm resultOptions={resultOptions} />
-
         <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            チェッククエリ一覧
+            Kubernetesパターン一覧
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
@@ -99,25 +88,19 @@ export default async function AdminPage() {
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     説明
                   </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    作成日時
-                  </th>
                 </tr>
               </thead>
               <tbody>
-                {data?.checkQueries?.length ? (
-                  data.checkQueries.map((query) => (
+                {data?.patterns?.length ? (
+                  data.patterns.map((pattern) => (
                     <tr
-                      key={query.id}
+                      key={pattern.id}
                       className="border-t border-slate-200 last:border-b"
                     >
-                      <td className="px-4 py-3 text-sm">{query.id}</td>
-                      <td className="px-4 py-3 text-sm">{query.name}</td>
+                      <td className="px-4 py-3 text-sm">{pattern.id}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{pattern.name}</td>
                       <td className="px-4 py-3 text-sm">
-                        {query.description ?? "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {formatDateTime(query.createdAt)}
+                        {pattern.description ?? "-"}
                       </td>
                     </tr>
                   ))
@@ -125,9 +108,9 @@ export default async function AdminPage() {
                   <tr className="border-t border-slate-200">
                     <td
                       className="px-4 py-4 text-center text-sm text-slate-500"
-                      colSpan={4}
+                      colSpan={3}
                     >
-                      登録されたチェッククエリはありません。
+                      パターンが登録されていません。
                     </td>
                   </tr>
                 )}
@@ -138,26 +121,23 @@ export default async function AdminPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            最近の判定結果 (最新50件)
+            チェック結果 (最新100件)
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
               <thead className="bg-slate-100 text-left">
                 <tr>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     リポジトリID
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    リポジトリ
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    チェッククエリ
+                    チェック項目ID
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     結果
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    Webアプリ
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     メモ
@@ -168,26 +148,23 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.myChecks?.length ? (
-                  data.myChecks.map((check) => (
+                {data?.checkResults?.length ? (
+                  data.checkResults.map((result) => (
                     <tr
-                      key={`${check.repositoryID}-${check.checkQueryID}`}
+                      key={result.id}
                       className="border-t border-slate-200 last:border-b"
                     >
-                      <td className="px-4 py-3 text-sm">{check.repositoryID}</td>
-                      <td className="px-4 py-3 text-sm">{check.repositoryName}</td>
+                      <td className="px-4 py-3 text-sm">{result.id}</td>
+                      <td className="px-4 py-3 text-sm">{result.repositoryId}</td>
+                      <td className="px-4 py-3 text-sm">{result.checkItemId}</td>
                       <td className="px-4 py-3 text-sm">
-                        {check.checkQueryName} (ID: {check.checkQueryID})
+                        {boolLabel(result.result)}
                       </td>
-                      <td className="px-4 py-3 text-sm">{check.result}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {boolLabel(check.isWebApp)}
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-pre-wrap">
-                        {check.memo ?? "-"}
+                      <td className="px-4 py-3 text-sm whitespace-pre-wrap max-w-xs">
+                        {result.memo ?? "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {formatDateTime(check.updatedAt)}
+                        {formatDateTime(result.updatedAt)}
                       </td>
                     </tr>
                   ))
@@ -195,9 +172,9 @@ export default async function AdminPage() {
                   <tr className="border-t border-slate-200">
                     <td
                       className="px-4 py-4 text-center text-sm text-slate-500"
-                      colSpan={7}
+                      colSpan={6}
                     >
-                      判定結果はまだ登録されていません。
+                      チェック結果はまだ登録されていません。
                     </td>
                   </tr>
                 )}

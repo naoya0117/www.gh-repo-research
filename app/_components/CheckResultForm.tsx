@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState } from "react-dom";
-import {
-  FormState,
-  createCheckResultAction,
-  initialFormState,
-} from "../actions";
+import { useActionState, useEffect, useRef } from "react";
+import { createCheckResultAction } from "../actions";
+import { initialFormState } from "../formState";
+import type { FormState } from "../formState";
 
 type Props = {
   resultOptions: string[];
@@ -14,7 +11,7 @@ type Props = {
 
 export function CheckResultForm({ resultOptions }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useFormState<FormState, FormData>(
+  const [state, formAction] = useActionState<FormState, FormData>(
     createCheckResultAction,
     initialFormState,
   );

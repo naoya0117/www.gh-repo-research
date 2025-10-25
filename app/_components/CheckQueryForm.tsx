@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormState } from "react-dom";
-import {
-  FormState,
-  createCheckQueryAction,
-  initialFormState,
-} from "../actions";
+import { useActionState, useEffect, useRef } from "react";
+import { createCheckQueryAction } from "../actions";
+import { initialFormState } from "../formState";
+import type { FormState } from "../formState";
 
 export function CheckQueryForm() {
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useFormState<FormState, FormData>(
+  const [state, formAction] = useActionState<FormState, FormData>(
     createCheckQueryAction,
     initialFormState,
   );
