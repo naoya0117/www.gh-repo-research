@@ -1,103 +1,268 @@
-import Image from "next/image";
+import { headers } from "next/headers";
 
-export default function Home() {
+import { CheckQueryForm } from "./_components/CheckQueryForm";
+import { CheckResultForm } from "./_components/CheckResultForm";
+import {
+  AdminDashboardData,
+  DEFAULT_RESULT_OPTIONS,
+} from "@/lib/adminTypes";
+
+export const revalidate = 0;
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function boolLabel(value: boolean | null | undefined) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return value ? "True" : "False";
+}
+
+export default async function AdminPage() {
+  const headerList = headers();
+  const host = headerList.get("host") ?? "localhost:3000";
+  const protocol =
+    headerList.get("x-forwarded-proto") ??
+    (process.env.NODE_ENV === "production" ? "https" : "http");
+  const url = `${protocol}://${host}/api/admin/dashboard`;
+
+  let data: AdminDashboardData | null = null;
+  let loadError: string | null = null;
+
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const payload = (await res.json().catch(() => null)) as
+      | AdminDashboardData
+      | { error?: string }
+      | null;
+
+    if (!res.ok) {
+      const message =
+        (payload && "error" in payload && payload?.error) ||
+        "管理用データの取得に失敗しました";
+      throw new Error(message);
+    }
+
+    data = payload as AdminDashboardData;
+  } catch (error) {
+    loadError =
+      error instanceof Error
+        ? error.message
+        : "管理用データの取得に失敗しました";
+  }
+
+  const resultOptions = data?.resultOptions ?? Array.from(DEFAULT_RESULT_OPTIONS);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-slate-100 text-slate-900">
+      <header className="bg-slate-900 px-6 py-4 text-white">
+        <h1 className="text-2xl font-semibold">チェッククエリ管理</h1>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-8">
+        {loadError ? (
+          <div className="rounded border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
+            {loadError}
+          </div>
+        ) : null}
+
+        <CheckQueryForm />
+
+        <CheckResultForm resultOptions={resultOptions} />
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
+            チェッククエリ一覧
+          </h2>
+          <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+            <table className="min-w-full">
+              <thead className="bg-slate-100 text-left">
+                <tr>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    名前
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    説明
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    作成日時
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.checkQueries?.length ? (
+                  data.checkQueries.map((query) => (
+                    <tr
+                      key={query.id}
+                      className="border-t border-slate-200 last:border-b"
+                    >
+                      <td className="px-4 py-3 text-sm">{query.id}</td>
+                      <td className="px-4 py-3 text-sm">{query.name}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {query.description ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatDateTime(query.createdAt)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="border-t border-slate-200">
+                    <td
+                      className="px-4 py-4 text-center text-sm text-slate-500"
+                      colSpan={4}
+                    >
+                      登録されたチェッククエリはありません。
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
+            最近の判定結果 (最新50件)
+          </h2>
+          <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+            <table className="min-w-full">
+              <thead className="bg-slate-100 text-left">
+                <tr>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    リポジトリID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    リポジトリ
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    チェッククエリ
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    結果
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    Webアプリ
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    メモ
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    更新日時
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.myChecks?.length ? (
+                  data.myChecks.map((check) => (
+                    <tr
+                      key={`${check.repositoryID}-${check.checkQueryID}`}
+                      className="border-t border-slate-200 last:border-b"
+                    >
+                      <td className="px-4 py-3 text-sm">{check.repositoryID}</td>
+                      <td className="px-4 py-3 text-sm">{check.repositoryName}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {check.checkQueryName} (ID: {check.checkQueryID})
+                      </td>
+                      <td className="px-4 py-3 text-sm">{check.result}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {boolLabel(check.isWebApp)}
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-pre-wrap">
+                        {check.memo ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatDateTime(check.updatedAt)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="border-t border-slate-200">
+                    <td
+                      className="px-4 py-4 text-center text-sm text-slate-500"
+                      colSpan={7}
+                    >
+                      判定結果はまだ登録されていません。
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="space-y-4 pb-10">
+          <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
+            リポジトリ一覧 (上位50件)
+          </h2>
+          <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
+            <table className="min-w-full">
+              <thead className="bg-slate-100 text-left">
+                <tr>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    Name With Owner
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    スター数
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    主要言語
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    Dockerfile
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.repositories?.length ? (
+                  data.repositories.map((repo) => (
+                    <tr key={repo.id} className="border-t border-slate-200 last:border-b">
+                      <td className="px-4 py-3 text-sm">{repo.id}</td>
+                      <td className="px-4 py-3 text-sm">{repo.nameWithOwner}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {repo.stargazerCount.toLocaleString("ja-JP")}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {repo.primaryLanguage ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {repo.hasDockerfile ? "Yes" : "No"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="border-t border-slate-200">
+                    <td
+                      className="px-4 py-4 text-center text-sm text-slate-500"
+                      colSpan={5}
+                    >
+                      登録済みのリポジトリはありません。
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
