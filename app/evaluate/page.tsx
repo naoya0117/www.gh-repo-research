@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 type Repository = {
@@ -34,7 +34,7 @@ type CheckResultInput = {
   memo: string;
 };
 
-export default function EvaluatePage() {
+function EvaluatePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const repoId = searchParams.get('id');
@@ -340,5 +340,19 @@ export default function EvaluatePage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function EvaluatePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-lg">読み込み中...</p>
+        </div>
+      }
+    >
+      <EvaluatePageContent />
+    </Suspense>
   );
 }
