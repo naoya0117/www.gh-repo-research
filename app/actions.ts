@@ -81,7 +81,7 @@ export async function createCheckQueryAction(
 
     const rawHtml = await response.text().catch(() => null);
     if (rawHtml) {
-      const errorMatch = rawHtml.match(/<div class="error">(.*?)<\/div>/s);
+      const errorMatch = rawHtml.match(/<div class="error">([\s\S]*?)<\/div>/);
       if (errorMatch?.[1]) {
         const sanitized = errorMatch[1]
           .replace(/<[^>]*>/g, "")
