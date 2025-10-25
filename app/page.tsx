@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 
 import type { AdminDashboardData } from "@/lib/adminTypes";
 
@@ -61,7 +62,15 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="bg-slate-900 px-6 py-4 text-white">
-        <h1 className="text-2xl font-semibold">Kubernetes パターン分析</h1>
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <h1 className="text-2xl font-semibold">Kubernetes パターン分析</h1>
+          <Link
+            href="/patterns"
+            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-700"
+          >
+            パターン管理
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-8">
@@ -206,6 +215,9 @@ export default async function AdminPage() {
                   <th className="px-4 py-3 text-sm font-semibold text-slate-600">
                     Dockerfile
                   </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -223,13 +235,21 @@ export default async function AdminPage() {
                       <td className="px-4 py-3 text-sm">
                         {repo.hasDockerfile ? "Yes" : "No"}
                       </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link
+                          href={`/evaluate?id=${repo.id}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          評価
+                        </Link>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr className="border-t border-slate-200">
                     <td
                       className="px-4 py-4 text-center text-sm text-slate-500"
-                      colSpan={5}
+                      colSpan={6}
                     >
                       登録済みのリポジトリはありません。
                     </td>
