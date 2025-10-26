@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { resolveInternalUrl } from "./internalOrigin";
 
 type GraphQLErrorItem = {
   message: string;
@@ -18,28 +18,7 @@ async function resolveGraphQLEndpoint(): Promise<string> {
     return normalizedPath;
   }
 
-  let origin: string | null = null;
-  try {
-    const headerList = await headers();
-    const host =
-      headerList.get("x-forwarded-host") ?? headerList.get("host") ?? undefined;
-    if (host) {
-      const protocol =
-        headerList.get("x-forwarded-proto") ??
-        headerList.get("forwarded-proto") ??
-        "http";
-      origin = `${protocol}://${host}`;
-    }
-  } catch {
-    origin = null;
-  }
-
-  if (!origin) {
-    const port = process.env.PORT ?? "3000";
-    origin = `http://localhost:${port}`;
-  }
-
-  return `${origin}${normalizedPath}`;
+  return resolveInternalUrl(normalizedPath);
 }
 
 export async function graphqlRequest<T>(
