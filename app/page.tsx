@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 
 import type { AdminDashboardData } from "@/lib/adminTypes";
+import { buildBasicAuthHeader } from "@/lib/internalOrigin";
 
 export const revalidate = 0;
 
@@ -42,7 +43,11 @@ export default async function AdminPage() {
   let loadError: string | null = null;
 
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const authHeader = buildBasicAuthHeader();
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: authHeader ? authHeader : undefined,
+    });
     const payload = (await res.json().catch(() => null)) as
       | AdminDashboardData
       | { error?: string }
