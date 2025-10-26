@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+
 const FALLBACK_PORT = process.env.PORT ?? "3000";
 const FALLBACK_ORIGIN = `http://localhost:${FALLBACK_PORT}`;
 
@@ -30,4 +32,18 @@ export async function resolveInternalUrl(path: string): Promise<string> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const origin = await resolveInternalOrigin();
   return `${origin}${normalizedPath}`;
+}
+
+export function buildBasicAuthHeader():
+  | {
+      Authorization: string;
+    }
+  | undefined {
+  const user = process.env.BASIC_AUTH_USER;
+  const pass = process.env.BASIC_AUTH_PASSWORD;
+  if (!user || !pass) {
+    return undefined;
+  }
+  const token = Buffer.from(`${user}:${pass}`).toString("base64");
+  return { Authorization: `Basic ${token}` };
 }

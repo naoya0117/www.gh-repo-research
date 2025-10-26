@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { graphqlRequest } from "@/lib/graphql";
-import { resolveInternalUrl } from "@/lib/internalOrigin";
+import { buildBasicAuthHeader, resolveInternalUrl } from "@/lib/internalOrigin";
 
 import type { FormState } from "./formState";
 
@@ -47,6 +47,7 @@ export async function createCheckQueryAction(
   }
 
   const endpoint = await resolveInternalUrl("/api/admin/check-queries");
+  const authHeader = buildBasicAuthHeader();
 
   try {
     const response = await fetch(endpoint, {
@@ -54,6 +55,7 @@ export async function createCheckQueryAction(
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "text/html",
+        ...(authHeader ?? {}),
       },
       body: params.toString(),
       redirect: "manual",

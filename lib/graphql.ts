@@ -1,4 +1,4 @@
-import { resolveInternalOrigin } from "./internalOrigin";
+import { buildBasicAuthHeader, resolveInternalOrigin } from "./internalOrigin";
 
 type GraphQLErrorItem = {
   message: string;
@@ -27,12 +27,21 @@ export async function graphqlRequest<T>(
   variables?: Record<string, unknown>,
 ): Promise<T> {
   const endpoint = await resolveGraphQLEndpoint();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  if (typeof window === "undefined") {
+    const authHeader = buildBasicAuthHeader();
+    if (authHeader) {
+      headers.Authorization = authHeader.Authorization;
+    }
+  }
+
   const res = await fetch(endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
     cache: "no-store",
   });

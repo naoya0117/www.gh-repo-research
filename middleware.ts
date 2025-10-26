@@ -14,7 +14,7 @@ function isAuthorized(request: NextRequest): boolean {
   }
 
   const base64Credentials = header.replace("Basic ", "").trim();
-  const decoded = Buffer.from(base64Credentials, "base64").toString("utf8");
+  const decoded = atob(base64Credentials);
   const [inputUser, inputPassword] = decoded.split(":");
   return inputUser === username && inputPassword === password;
 }
