@@ -1,10 +1,42 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { graphqlRequest } from "@/lib/graphql";
 
 import type { FormState } from "./formState";
+
+async function resolveInternalUrl(path: string): Promise<string> {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (typeof window !== "undefined") {
+    return normalizedPath;
+  }
+
+  let origin: string | null = null;
+  try {
+    const headerList = await headers();
+    const host =
+      headerList.get("x-forwarded-host") ?? headerList.get("host") ?? undefined;
+    if (host) {
+      const protocol =
+        headerList.get("x-forwarded-proto") ??
+        headerList.get("forwarded-proto") ??
+        "http";
+      origin = `${protocol}://${host}`;
+    }
+  } catch {
+    origin = null;
+  }
+
+  if (!origin) {
+    const port = process.env.PORT ?? "3000";
+    origin = `http://localhost:${port}`;
+  }
+
+  return `${origin}${normalizedPath}`;
+}
 
 const CREATE_CHECK_RESULT_MUTATION = /* GraphQL */ `
   mutation CreateCheckResult($input: NewCheckResultInput!) {
@@ -45,8 +77,7 @@ export async function createCheckQueryAction(
     params.set("description", description.trim());
   }
 
-  const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8080";
-  const endpoint = `${apiBaseUrl.replace(/\/$/, "")}/admin/check-queries`;
+  const endpoint = await resolveInternalUrl("/api/admin/check-queries");
 
   try {
     const response = await fetch(endpoint, {
