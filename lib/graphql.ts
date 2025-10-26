@@ -1,4 +1,4 @@
-import { resolveInternalUrl } from "./internalOrigin";
+import { resolveInternalOrigin } from "./internalOrigin";
 
 type GraphQLErrorItem = {
   message: string;
@@ -18,7 +18,8 @@ async function resolveGraphQLEndpoint(): Promise<string> {
     return normalizedPath;
   }
 
-  return resolveInternalUrl(normalizedPath);
+  const origin = await resolveInternalOrigin();
+  return `${origin}${normalizedPath}`;
 }
 
 export async function graphqlRequest<T>(

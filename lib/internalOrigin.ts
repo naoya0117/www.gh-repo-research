@@ -1,42 +1,29 @@
-import { headers } from "next/headers";
+const FALLBACK_PORT = process.env.PORT ?? "3000";
+const FALLBACK_ORIGIN = `http://localhost:${FALLBACK_PORT}`;
 
-const envOriginCandidates = [
-  "INTERNAL_APP_ORIGIN",
-  "APP_ORIGIN",
-  "NEXT_PUBLIC_APP_URL",
-  "NEXTAUTH_URL",
-];
+function resolvePublicAppUrl(): string | null {
+  const value = process.env.NEXT_PUBLIC_APP_URL;
+  if (!value || !value.trim()) {
+    return null;
+  }
+  try {
+    const url = new URL(value);
+    url.pathname = "/";
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    // Ignore invalid URLs; fall back below
+    return null;
+  }
+}
 
 export async function resolveInternalOrigin(): Promise<string> {
-  // Try to read from request headers when available
-  try {
-    const headerList = await headers();
-    const host =
-      headerList.get("x-forwarded-host") ?? headerList.get("host") ?? undefined;
-    if (host) {
-      const protocol =
-        headerList.get("x-forwarded-proto") ??
-        headerList.get("forwarded-proto") ??
-        "http";
-      return `${protocol}://${host}`;
-    }
-  } catch {
-    // Ignore – fall back to environment variables
+  const origin = resolvePublicAppUrl();
+  if (origin) {
+    return origin;
   }
-
-  for (const key of envOriginCandidates) {
-    const value = process.env[key];
-    if (value && value.trim()) {
-      return value.trim().replace(/\/$/, "");
-    }
-  }
-
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
-  }
-
-  const port = process.env.PORT ?? "3000";
-  return `http://localhost:${port}`;
+  return FALLBACK_ORIGIN;
 }
 
 export async function resolveInternalUrl(path: string): Promise<string> {
