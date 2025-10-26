@@ -37,6 +37,17 @@ export async function graphqlRequest<T>(
     cache: "no-store",
   });
 
+  const contentType = res.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("application/json")) {
+    const rawBody = await res.text().catch(() => "");
+    const snippet = rawBody.slice(0, 200);
+    const hintedType = contentType || "unknown";
+    throw new Error(
+      `Unexpected GraphQL response (content-type: ${hintedType}). Body preview: ${snippet}`,
+    );
+  }
+
   const body = (await res.json()) as GraphQLResponse<T>;
 
   if (!res.ok || body.errors?.length) {
