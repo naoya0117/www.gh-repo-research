@@ -12,15 +12,15 @@ type CheckItem = {
 type Props = {
   patternId: number;
   checkItem?: CheckItem;
-  onSuccess: () => void;
-  onCancel?: () => void;
+  onSuccessAction: () => void;
+  onCancelAction?: () => void;
 };
 
 export function CheckItemForm({
   patternId,
   checkItem,
-  onSuccess,
-  onCancel,
+  onSuccessAction,
+  onCancelAction,
 }: Props) {
   const [name, setName] = useState(checkItem?.name || "");
   const [description, setDescription] = useState(checkItem?.description || "");
@@ -76,7 +76,7 @@ export function CheckItemForm({
 
       const data = await res.json();
       if (data.errors) {
-        throw new Error(data.errors[0].message);
+        setError(data.errors[0].message);
       }
 
       const result = checkItem
@@ -84,7 +84,7 @@ export function CheckItemForm({
         : data.data.createCheckItem;
 
       if (result.success) {
-        onSuccess();
+        onSuccessAction();
       } else {
         setError(result.message || "保存に失敗しました");
       }
@@ -143,10 +143,10 @@ export function CheckItemForm({
         >
           {isSubmitting ? "保存中..." : checkItem ? "更新" : "追加"}
         </button>
-        {onCancel && (
+        {onCancelAction && (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={onCancelAction}
             className="rounded border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             キャンセル

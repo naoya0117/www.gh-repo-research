@@ -66,10 +66,10 @@ export function PatternList() {
       const itemsData = await itemsRes.json();
 
       if (patternsData.errors) {
-        throw new Error(patternsData.errors[0].message);
+        setError(patternsData.errors[0].message);
       }
       if (itemsData.errors) {
-        throw new Error(itemsData.errors[0].message);
+        setError(itemsData.errors[0].message);
       }
 
       setPatterns(patternsData.data.patterns);
@@ -128,7 +128,7 @@ export function PatternList() {
       {showNewPatternForm && (
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold">新しいパターン</h3>
-          <PatternForm onSuccess={handlePatternCreated} />
+          <PatternForm onSuccessAction={handlePatternCreated} />
         </div>
       )}
 
@@ -138,8 +138,8 @@ export function PatternList() {
             key={pattern.id}
             pattern={pattern}
             checkItems={checkItems.filter((item) => item.patternId === pattern.id)}
-            onUpdate={fetchData}
-            onDelete={handlePatternDeleted}
+            onUpdateAction={fetchData}
+            onDeleteAction={handlePatternDeleted}
           />
         ))}
 

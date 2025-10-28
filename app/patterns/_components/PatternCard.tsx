@@ -21,11 +21,11 @@ type CheckItem = {
 type Props = {
   pattern: Pattern;
   checkItems: CheckItem[];
-  onUpdate: () => void;
-  onDelete: () => void;
+  onUpdateAction: () => void;
+  onDeleteAction: () => void;
 };
 
-export function PatternCard({ pattern, checkItems, onUpdate, onDelete }: Props) {
+export function PatternCard({ pattern, checkItems, onUpdateAction, onDeleteAction }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [showCheckItemForm, setShowCheckItemForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -55,11 +55,11 @@ export function PatternCard({ pattern, checkItems, onUpdate, onDelete }: Props) 
 
       const data = await res.json();
       if (data.errors) {
-        throw new Error(data.errors[0].message);
+          alert(data.errors[0].message);
       }
 
       if (data.data.deletePattern.success) {
-        onDelete();
+        onDeleteAction();
       } else {
         alert(data.data.deletePattern.message || "削除に失敗しました");
       }
@@ -72,12 +72,12 @@ export function PatternCard({ pattern, checkItems, onUpdate, onDelete }: Props) 
 
   const handlePatternUpdated = () => {
     setIsEditing(false);
-    onUpdate();
+    onUpdateAction();
   };
 
   const handleCheckItemCreated = () => {
     setShowCheckItemForm(false);
-    onUpdate();
+    onUpdateAction();
   };
 
   return (
@@ -88,8 +88,8 @@ export function PatternCard({ pattern, checkItems, onUpdate, onDelete }: Props) 
             <h3 className="mb-4 text-lg font-semibold">パターンを編集</h3>
             <PatternForm
               pattern={pattern}
-              onSuccess={handlePatternUpdated}
-              onCancel={() => setIsEditing(false)}
+              onSuccessAction={handlePatternUpdated}
+              onCancelAction={() => setIsEditing(false)}
             />
           </div>
         ) : (
@@ -141,12 +141,12 @@ export function PatternCard({ pattern, checkItems, onUpdate, onDelete }: Props) 
           <div className="mb-4 rounded border border-slate-200 bg-slate-50 p-4">
             <CheckItemForm
               patternId={pattern.id}
-              onSuccess={handleCheckItemCreated}
+              onSuccessAction={handleCheckItemCreated}
             />
           </div>
         )}
 
-        <CheckItemList checkItems={checkItems} onUpdate={onUpdate} />
+        <CheckItemList checkItems={checkItems} onUpdateAction={onUpdateAction} />
       </div>
     </div>
   );

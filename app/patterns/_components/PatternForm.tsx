@@ -10,11 +10,11 @@ type Pattern = {
 
 type Props = {
   pattern?: Pattern;
-  onSuccess: () => void;
-  onCancel?: () => void;
+  onSuccessAction: () => void;
+  onCancelAction?: () => void;
 };
 
-export function PatternForm({ pattern, onSuccess, onCancel }: Props) {
+export function PatternForm({ pattern, onSuccessAction, onCancelAction }: Props) {
   const [name, setName] = useState(pattern?.name || "");
   const [description, setDescription] = useState(pattern?.description || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +67,7 @@ export function PatternForm({ pattern, onSuccess, onCancel }: Props) {
 
       const data = await res.json();
       if (data.errors) {
-        throw new Error(data.errors[0].message);
+          setError(data.errors[0].message);
       }
 
       const result = pattern
@@ -75,7 +75,7 @@ export function PatternForm({ pattern, onSuccess, onCancel }: Props) {
         : data.data.createPattern;
 
       if (result.success) {
-        onSuccess();
+        onSuccessAction();
       } else {
         setError(result.message || "保存に失敗しました");
       }
@@ -134,10 +134,10 @@ export function PatternForm({ pattern, onSuccess, onCancel }: Props) {
         >
           {isSubmitting ? "保存中..." : pattern ? "更新" : "作成"}
         </button>
-        {onCancel && (
+        {onCancelAction && (
           <button
             type="button"
-            onClick={onCancel}
+            onClick={onCancelAction}
             className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             キャンセル

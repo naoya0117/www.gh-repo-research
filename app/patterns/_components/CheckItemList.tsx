@@ -12,10 +12,10 @@ type CheckItem = {
 
 type Props = {
   checkItems: CheckItem[];
-  onUpdate: () => void;
+  onUpdateAction: () => void;
 };
 
-export function CheckItemList({ checkItems, onUpdate }: Props) {
+export function CheckItemList({ checkItems, onUpdateAction }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -44,11 +44,11 @@ export function CheckItemList({ checkItems, onUpdate }: Props) {
 
       const data = await res.json();
       if (data.errors) {
-        throw new Error(data.errors[0].message);
+        alert(data.errors[0].message);
       }
 
       if (data.data.deleteCheckItem.success) {
-        onUpdate();
+        onUpdateAction();
       } else {
         alert(data.data.deleteCheckItem.message || "削除に失敗しました");
       }
@@ -61,7 +61,7 @@ export function CheckItemList({ checkItems, onUpdate }: Props) {
 
   const handleCheckItemUpdated = () => {
     setEditingId(null);
-    onUpdate();
+    onUpdateAction();
   };
 
   if (checkItems.length === 0) {
@@ -83,8 +83,8 @@ export function CheckItemList({ checkItems, onUpdate }: Props) {
             <CheckItemForm
               patternId={item.patternId}
               checkItem={item}
-              onSuccess={handleCheckItemUpdated}
-              onCancel={() => setEditingId(null)}
+              onSuccessAction={handleCheckItemUpdated}
+              onCancelAction={() => setEditingId(null)}
             />
           ) : (
             <div className="flex items-start justify-between">
