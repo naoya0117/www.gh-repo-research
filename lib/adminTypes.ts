@@ -38,4 +38,5 @@ export type AdminDashboardData = {
   patterns: K8sPattern[];
   repositories: Repository[];
   checkResults: CheckResult[];
+  unevaluatedRepositoriesWithDockerfile?: Repository[];
 };

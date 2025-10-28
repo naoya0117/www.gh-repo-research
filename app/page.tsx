@@ -54,18 +54,16 @@ export default async function AdminPage() {
       | null;
 
     if (!res.ok) {
-      const message =
+      loadError =
         (payload && "error" in payload && payload?.error) ||
         "管理用データの取得に失敗しました";
-      throw new Error(message);
+
     }
 
     data = payload as AdminDashboardData;
   } catch (error) {
-    loadError =
-      error instanceof Error
-        ? error.message
-        : "管理用データの取得に失敗しました";
+    console.error("Failed to fetch admin dashboard data:", error);
+    loadError = "管理用データの取得に失敗しました";
   }
 
   const repositories =
@@ -74,9 +72,9 @@ export default async function AdminPage() {
   const evaluatedRepositories = repositories.filter(
     (repo) => repo.isWebApp !== null && repo.isWebApp !== undefined
   );
-  const pendingRepositories = repositories.filter(
-    (repo) => repo.isWebApp === null || repo.isWebApp === undefined
-  );
+  
+  // 新しいAPIから未評価リポジトリを取得（確実に50件）
+  const pendingRepositories = data?.unevaluatedRepositoriesWithDockerfile ?? [];
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -119,7 +117,7 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.patterns?.length ? (
+                {data && data.patterns && data.patterns.length ? (
                   data.patterns.map((pattern) => (
                     <tr
                       key={pattern.id}
@@ -176,7 +174,7 @@ export default async function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.checkResults?.length ? (
+                {data && data.checkResults && data.checkResults.length ? (
                   data.checkResults.map((result) => (
                     <tr
                       key={result.id}
