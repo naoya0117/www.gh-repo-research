@@ -71,7 +71,12 @@ export default async function AdminPage() {
 
   const evaluatedRepositories = repositories
     .filter((repo) => repo.isWebApp !== null && repo.isWebApp !== undefined)
-    .sort((a, b) => a.stargazerCount - b.stargazerCount)
+    .sort((a, b) => {
+      // 評価日時の降順（新しい順）でソート
+      const dateA = a.webAppCheckedAt ? new Date(a.webAppCheckedAt).getTime() : 0;
+      const dateB = b.webAppCheckedAt ? new Date(b.webAppCheckedAt).getTime() : 0;
+      return dateB - dateA;
+    })
     .slice(0, 10);
 
   const totalEvaluated = repositories.filter(
@@ -186,7 +191,7 @@ export default async function AdminPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            評価済みリポジトリ (スター数下位10件)
+            評価済みリポジトリ (最近の評価10件)
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
