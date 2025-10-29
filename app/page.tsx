@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { AdminDashboardData } from "@/lib/adminTypes";
 import { buildBasicAuthHeader } from "@/lib/internalOrigin";
+import { CopyCloneButton } from "@/app/_components/CopyCloneButton";
 
 export const revalidate = 0;
 
@@ -293,7 +294,12 @@ export default async function AdminPage() {
                   pendingRepositories.map((repo) => (
                     <tr key={repo.id} className="border-t border-slate-200 last:border-b">
                       <td className="px-4 py-3 text-sm">{repo.id}</td>
-                      <td className="px-4 py-3 text-sm">{repo.nameWithOwner}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="flex items-center">
+                          <span>{repo.nameWithOwner}</span>
+                          <CopyCloneButton nameWithOwner={repo.nameWithOwner} />
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         {repo.stargazerCount.toLocaleString("ja-JP")}
                       </td>
