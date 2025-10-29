@@ -69,10 +69,23 @@ export default async function AdminPage() {
   const repositories =
     data?.repositories?.filter((repo) => repo.hasDockerfile) ?? [];
 
-  const evaluatedRepositories = repositories.filter(
+  const evaluatedRepositories = repositories
+    .filter((repo) => repo.isWebApp !== null && repo.isWebApp !== undefined)
+    .sort((a, b) => a.stargazerCount - b.stargazerCount)
+    .slice(0, 10);
+
+  const totalEvaluated = repositories.filter(
     (repo) => repo.isWebApp !== null && repo.isWebApp !== undefined
-  );
-  
+  ).length;
+
+  const webAppCount = repositories.filter(
+    (repo) => repo.isWebApp === true
+  ).length;
+
+  const nonWebAppCount = repositories.filter(
+    (repo) => repo.isWebApp === false
+  ).length;
+
   // 新しいAPIから未評価リポジトリを取得（確実に50件）
   const pendingRepositories = data?.unevaluatedRepositoriesWithDockerfile ?? [];
 
@@ -147,71 +160,33 @@ export default async function AdminPage() {
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            チェック結果 (最新100件)
+            評価済みリポジトリ統計
           </h2>
-          <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-            <table className="min-w-full">
-              <thead className="bg-slate-100 text-left">
-                <tr>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    ID
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    リポジトリID
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    チェック項目ID
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    結果
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    メモ
-                  </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-slate-600">
-                    更新日時
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data && data.checkResults && data.checkResults.length ? (
-                  data.checkResults.map((result) => (
-                    <tr
-                      key={result.id}
-                      className="border-t border-slate-200 last:border-b"
-                    >
-                      <td className="px-4 py-3 text-sm">{result.id}</td>
-                      <td className="px-4 py-3 text-sm">{result.repositoryId}</td>
-                      <td className="px-4 py-3 text-sm">{result.checkItemId}</td>
-                      <td className="px-4 py-3 text-sm">
-                        {boolLabel(result.result)}
-                      </td>
-                      <td className="px-4 py-3 text-sm whitespace-pre-wrap max-w-xs">
-                        {result.memo ?? "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {formatDateTime(result.updatedAt)}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr className="border-t border-slate-200">
-                    <td
-                      className="px-4 py-4 text-center text-sm text-slate-500"
-                      colSpan={6}
-                    >
-                      チェック結果はまだ登録されていません。
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-lg bg-white px-6 py-4 shadow-sm">
+              <div className="text-sm text-slate-600">評価済みリポジトリ数</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-900">
+                {totalEvaluated.toLocaleString("ja-JP")}
+              </div>
+            </div>
+            <div className="rounded-lg bg-white px-6 py-4 shadow-sm">
+              <div className="text-sm text-slate-600">Webアプリ判定</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">
+                {webAppCount.toLocaleString("ja-JP")}
+              </div>
+            </div>
+            <div className="rounded-lg bg-white px-6 py-4 shadow-sm">
+              <div className="text-sm text-slate-600">非Webアプリ判定</div>
+              <div className="mt-1 text-2xl font-semibold text-slate-600">
+                {nonWebAppCount.toLocaleString("ja-JP")}
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="space-y-4">
           <h2 className="text-xl font-semibold border-b border-slate-200 pb-2">
-            評価済みリポジトリ (Dockerfileあり)
+            評価済みリポジトリ (スター数下位10件)
           </h2>
           <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
             <table className="min-w-full">
