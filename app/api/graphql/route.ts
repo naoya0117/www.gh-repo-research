@@ -8,16 +8,42 @@ export async function POST(request: NextRequest) {
     // クライアントからのリクエストボディを取得
     const body = await request.json();
 
+    // API認証用のヘッダーを準備
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    // API_SECRET_KEYを使用してバックエンドに認証
+    const apiKey = process.env.API_SECRET_KEY;
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+
     // バックエンドのGraphQLサーバーにプロキシ
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify(body),
       cache: "no-store",
     });
+
+    // 認証エラー（401）の場合は特別に処理
+    if (response.status === 401) {
+      const text = await response.text();
+      console.error(`[GraphQL Proxy] Authentication failed: ${text}`);
+
+      return NextResponse.json(
+        {
+          errors: [
+            {
+              message: `認証エラー: ${text || "APIキーが無効です"}`,
+            },
+          ],
+        },
+        { status: 401 }
+      );
+    }
 
     // レスポンスのContent-Typeを確認
     const contentType = response.headers.get("content-type");

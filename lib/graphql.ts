@@ -22,6 +22,18 @@ async function resolveGraphQLEndpoint(): Promise<string> {
   return `${origin}${normalizedPath}`;
 }
 
+function buildAPIKeyHeader():
+  | {
+      Authorization: string;
+    }
+  | undefined {
+  const apiKey = process.env.API_SECRET_KEY;
+  if (!apiKey) {
+    return undefined;
+  }
+  return { Authorization: `Bearer ${apiKey}` };
+}
+
 export async function graphqlRequest<T>(
   query: string,
   variables?: Record<string, unknown>,
@@ -32,10 +44,17 @@ export async function graphqlRequest<T>(
     Accept: "application/json",
   };
 
+  // サーバーサイドの場合、API Key認証を使用
   if (typeof window === "undefined") {
-    const authHeader = buildBasicAuthHeader();
-    if (authHeader) {
-      headers.Authorization = authHeader.Authorization;
+    const apiKeyHeader = buildAPIKeyHeader();
+    if (apiKeyHeader) {
+      headers.Authorization = apiKeyHeader.Authorization;
+    } else {
+      // Fallback to Basic Auth if API_SECRET_KEY is not set
+      const authHeader = buildBasicAuthHeader();
+      if (authHeader) {
+        headers.Authorization = authHeader.Authorization;
+      }
     }
   }
 
