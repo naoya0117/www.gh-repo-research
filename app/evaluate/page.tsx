@@ -57,6 +57,7 @@ function EvaluatePageContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
 
   // Fetch repository and patterns on mount
   useEffect(() => {
@@ -196,8 +197,35 @@ function EvaluatePageContent() {
       return;
     }
 
+    // Webアプリの場合、全てのチェック項目が選択されているか確認
+    if (isWebApp) {
+      const allCheckItems = patterns.flatMap((pattern) => pattern.checkItems);
+      const uncheckedItems = allCheckItems.filter(
+        (item) => !checkResults.has(item.id)
+      );
+
+      if (uncheckedItems.length > 0) {
+        setError(
+          `全てのチェック項目を選択してください。未選択: ${uncheckedItems.length}件`
+        );
+        setShowValidation(true);
+        // 最初の未選択項目までスクロール
+        const firstUncheckedElement = document.querySelector(
+          `input[name="check-${uncheckedItems[0].id}"]`
+        );
+        if (firstUncheckedElement) {
+          firstUncheckedElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+        return;
+      }
+    }
+
     setSaving(true);
     setError(null);
+    setShowValidation(false);
 
     const checkResultsArray = isWebApp ? Array.from(checkResults.values()) : [];
 
@@ -289,6 +317,13 @@ function EvaluatePageContent() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6">
+          {/* エラーメッセージ */}
+          {error && (
+            <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
+
           {/* WebApp判定セクション */}
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-4">Webアプリケーション判定 (必須)</h3>
@@ -329,43 +364,62 @@ function EvaluatePageContent() {
                     <p className="text-sm text-gray-600 mb-3">{pattern.description}</p>
                   )}
                   <div className="space-y-3">
-                    {pattern.checkItems.map((item) => (
-                      <div key={item.id} className="bg-gray-50 p-3 rounded">
-                        <div className="font-medium mb-2">{item.name}</div>
-                        {item.description && (
-                          <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                        )}
-                        <div className="flex gap-4 items-center mb-2">
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name={`check-${item.id}`}
-                              checked={checkResults.get(item.id)?.result === true}
-                              onChange={() => handleCheckChange(item.id, true)}
-                              className="mr-1"
-                            />
-                            ○ 満たす
-                          </label>
-                          <label className="flex items-center">
-                            <input
-                              type="radio"
-                              name={`check-${item.id}`}
-                              checked={checkResults.get(item.id)?.result === false}
-                              onChange={() => handleCheckChange(item.id, false)}
-                              className="mr-1"
-                            />
-                            ✕ 満たさない
-                          </label>
+                    {pattern.checkItems.map((item) => {
+                      const isChecked = checkResults.has(item.id);
+                      const needsValidation = showValidation && !isChecked;
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          className={`p-3 rounded ${
+                            needsValidation
+                              ? 'bg-red-50 border-2 border-red-300'
+                              : 'bg-gray-50'
+                          }`}
+                        >
+                          <div className="font-medium mb-2">
+                            {item.name}
+                            {needsValidation && (
+                              <span className="ml-2 text-red-600 text-sm">
+                                ※ 選択してください
+                              </span>
+                            )}
+                          </div>
+                          {item.description && (
+                            <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                          )}
+                          <div className="flex gap-4 items-center mb-2">
+                            <label className="flex items-center">
+                              <input
+                                type="radio"
+                                name={`check-${item.id}`}
+                                checked={checkResults.get(item.id)?.result === true}
+                                onChange={() => handleCheckChange(item.id, true)}
+                                className="mr-1"
+                              />
+                              ○ 満たす
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="radio"
+                                name={`check-${item.id}`}
+                                checked={checkResults.get(item.id)?.result === false}
+                                onChange={() => handleCheckChange(item.id, false)}
+                                className="mr-1"
+                              />
+                              ✕ 満たさない
+                            </label>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="メモ (任意)"
+                            value={checkResults.get(item.id)?.memo || ''}
+                            onChange={(e) => handleMemoChange(item.id, e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                          />
                         </div>
-                        <input
-                          type="text"
-                          placeholder="メモ (任意)"
-                          value={checkResults.get(item.id)?.memo || ''}
-                          onChange={(e) => handleMemoChange(item.id, e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
