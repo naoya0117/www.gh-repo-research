@@ -58,6 +58,7 @@ function EvaluatePageContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showValidation, setShowValidation] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Fetch repository and patterns on mount
   useEffect(() => {
@@ -178,6 +179,9 @@ function EvaluatePageContent() {
       newMap.set(checkItemId, { ...existing, result });
       return newMap;
     });
+    // バリデーションエラーをクリア
+    setValidationError(null);
+    setShowValidation(false);
   };
 
   const handleMemoChange = (checkItemId: number, memo: string) => {
@@ -189,29 +193,50 @@ function EvaluatePageContent() {
     });
   };
 
+  // フォームのバリデーション状態を計算
+  const getValidationState = () => {
+    if (isWebApp === null) {
+      return {
+        isValid: false,
+        errorMessage: 'Webアプリケーションかどうかを選択してください',
+        uncheckedItems: [],
+      };
+    }
+
+    if (isWebApp) {
+      const allCheckItems = patterns.flatMap((pattern) => pattern.checkItems);
+      const uncheckedItems = allCheckItems.filter((item) => !checkResults.has(item.id));
+
+      if (uncheckedItems.length > 0) {
+        return {
+          isValid: false,
+          errorMessage: `全てのチェック項目を選択してください (未選択: ${uncheckedItems.length}件)`,
+          uncheckedItems,
+        };
+      }
+    }
+
+    return {
+      isValid: true,
+      errorMessage: null,
+      uncheckedItems: [],
+    };
+  };
+
+  const validationState = getValidationState();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isWebApp === null) {
-      setError('Webアプリケーションかどうかを選択してください');
-      return;
-    }
+    // フロントエンドバリデーション
+    if (!validationState.isValid) {
+      setValidationError(validationState.errorMessage);
+      setShowValidation(true);
 
-    // Webアプリの場合、全てのチェック項目が選択されているか確認
-    if (isWebApp) {
-      const allCheckItems = patterns.flatMap((pattern) => pattern.checkItems);
-      const uncheckedItems = allCheckItems.filter(
-        (item) => !checkResults.has(item.id)
-      );
-
-      if (uncheckedItems.length > 0) {
-        setError(
-          `全てのチェック項目を選択してください。未選択: ${uncheckedItems.length}件`
-        );
-        setShowValidation(true);
-        // 最初の未選択項目までスクロール
+      // 最初の未選択項目までスクロール
+      if (validationState.uncheckedItems.length > 0) {
         const firstUncheckedElement = document.querySelector(
-          `input[name="check-${uncheckedItems[0].id}"]`
+          `input[name="check-${validationState.uncheckedItems[0].id}"]`
         );
         if (firstUncheckedElement) {
           firstUncheckedElement.scrollIntoView({
@@ -219,12 +244,13 @@ function EvaluatePageContent() {
             block: 'center',
           });
         }
-        return;
       }
+      return;
     }
 
     setSaving(true);
     setError(null);
+    setValidationError(null);
     setShowValidation(false);
 
     const checkResultsArray = isWebApp ? Array.from(checkResults.values()) : [];
@@ -321,6 +347,13 @@ function EvaluatePageContent() {
           {error && (
             <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               <p className="font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* バリデーションエラーメッセージ */}
+          {validationError && (
+            <div className="mb-6 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
+              <p className="font-medium">⚠️ {validationError}</p>
             </div>
           )}
 
@@ -427,10 +460,10 @@ function EvaluatePageContent() {
           )}
 
           {/* 送信ボタン */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             <button
               type="submit"
-              disabled={saving || isWebApp === null}
+              disabled={saving || !validationState.isValid}
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {saving ? '保存中...' : '登録'}
@@ -442,6 +475,11 @@ function EvaluatePageContent() {
             >
               キャンセル
             </button>
+            {!validationState.isValid && !saving && (
+              <span className="text-sm text-yellow-700">
+                {validationState.errorMessage}
+              </span>
+            )}
           </div>
         </form>
       </div>
