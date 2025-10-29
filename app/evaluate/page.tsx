@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { CopyCloneButton } from '@/app/_components/CopyCloneButton';
 
 type Repository = {
   id: number;
@@ -228,7 +229,10 @@ function EvaluatePageContent() {
         <div className="bg-white shadow rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold mb-4">リポジトリ評価</h1>
           <div className="mb-4">
-            <h2 className="text-xl font-semibold">{repository.nameWithOwner}</h2>
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold">{repository.nameWithOwner}</h2>
+              <CopyCloneButton nameWithOwner={repository.nameWithOwner} />
+            </div>
             <div className="text-sm text-gray-600 mt-2">
               <p>⭐ {repository.stargazerCount.toLocaleString()} stars</p>
               {repository.primaryLanguage && <p>言語: {repository.primaryLanguage}</p>}
