@@ -35,6 +35,16 @@ type CheckResultInput = {
   memo: string;
 };
 
+type CheckResult = {
+  id: number;
+  repositoryId: number;
+  checkItemId: number;
+  result: boolean;
+  memo: string | null;
+  checkedAt: string;
+  updatedAt: string;
+};
+
 function EvaluatePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -99,8 +109,28 @@ function EvaluatePageContent() {
           `,
         }),
       }).then((res) => res.json()),
+      fetch(`/api/graphql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query GetCheckResults($repositoryId: Int!) {
+              checkResults(repositoryId: $repositoryId) {
+                id
+                repositoryId
+                checkItemId
+                result
+                memo
+                checkedAt
+                updatedAt
+              }
+            }
+          `,
+          variables: { repositoryId: parseInt(repoId) },
+        }),
+      }).then((res) => res.json()),
     ])
-      .then(([repoData, patternsData]) => {
+      .then(([repoData, patternsData, checkResultsData]) => {
         if (repoData.errors) {
           setError(repoData.errors[0].message);
           return;
@@ -109,10 +139,28 @@ function EvaluatePageContent() {
           setError(patternsData.errors[0].message);
           return;
         }
+        if (checkResultsData.errors) {
+          setError(checkResultsData.errors[0].message);
+          return;
+        }
 
-        setRepository(repoData.data.repository);
+        const repo = repoData.data.repository;
+        setRepository(repo);
         setPatterns(patternsData.data.patterns);
-        setIsWebApp(repoData.data.repository?.isWebApp);
+        setIsWebApp(repo?.isWebApp);
+
+        // 既存のチェック結果をフォームに反映
+        if (checkResultsData.data.checkResults) {
+          const existingResults = new Map<number, CheckResultInput>();
+          checkResultsData.data.checkResults.forEach((result: CheckResult) => {
+            existingResults.set(result.checkItemId, {
+              checkItemId: result.checkItemId,
+              result: result.result,
+              memo: result.memo || '',
+            });
+          });
+          setCheckResults(existingResults);
+        }
       })
       .catch((err) => {
         setError(`データの取得に失敗しました: ${err.message}`);

@@ -5,22 +5,37 @@ import Link from "next/link";
 import type { Repository } from "@/lib/adminTypes";
 import { graphqlRequest } from "@/lib/graphql";
 
-function formatDateTime(value: string | null | undefined) {
+function FormattedDateTime({ value }: { value: string | null | undefined }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <span>-</span>;
+  }
+
   if (!value) {
-    return "-";
+    return <span>-</span>;
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "-";
+    return <span>-</span>;
   }
-  return date.toLocaleString("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+
+  return (
+    <span>
+      {date.toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </span>
+  );
 }
 
 function boolLabel(value: boolean | null | undefined) {
@@ -162,7 +177,7 @@ export function EvaluatedRepositoriesSection({
                     {boolLabel(repo.isWebApp)}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    {formatDateTime(repo.webAppCheckedAt)}
+                    <FormattedDateTime value={repo.webAppCheckedAt} />
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <Link
