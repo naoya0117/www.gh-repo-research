@@ -42,6 +42,11 @@ const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
       isWebApp
       webAppCheckedAt
     }
+    evaluatedRepositoriesStats {
+      totalCount
+      webAppCount
+      nonWebAppCount
+    }
   }
 `;
 
@@ -50,12 +55,18 @@ export async function GET() {
     const data = await graphqlRequest<{
       adminDashboard: AdminDashboardData;
       unevaluatedRepositoriesWithDockerfile: AdminDashboardData["repositories"];
+      evaluatedRepositoriesStats: {
+        totalCount: number;
+        webAppCount: number;
+        nonWebAppCount: number;
+      };
     }>(ADMIN_DASHBOARD_QUERY, { limit: 50, unevaluatedLimit: 50 });
 
-    // 未評価リポジトリを追加したレスポンスを作成
+    // 未評価リポジトリと統計を追加したレスポンスを作成
     const response = {
       ...data.adminDashboard,
       unevaluatedRepositoriesWithDockerfile: data.unevaluatedRepositoriesWithDockerfile,
+      evaluatedRepositoriesStats: data.evaluatedRepositoriesStats,
     };
 
     return NextResponse.json(response);

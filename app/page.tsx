@@ -56,17 +56,10 @@ export default async function AdminPage() {
     })
     .slice(0, 10);
 
-  const totalEvaluated = repositories.filter(
-    (repo) => repo.isWebApp !== null && repo.isWebApp !== undefined
-  ).length;
-
-  const webAppCount = repositories.filter(
-    (repo) => repo.isWebApp === true
-  ).length;
-
-  const nonWebAppCount = repositories.filter(
-    (repo) => repo.isWebApp === false
-  ).length;
+  // 統計はAPIから取得した値を使用
+  const totalEvaluated = data?.evaluatedRepositoriesStats?.totalCount ?? 0;
+  const webAppCount = data?.evaluatedRepositoriesStats?.webAppCount ?? 0;
+  const nonWebAppCount = data?.evaluatedRepositoriesStats?.nonWebAppCount ?? 0;
 
   // 新しいAPIから未評価リポジトリを取得（確実に50件）
   const pendingRepositories = data?.unevaluatedRepositoriesWithDockerfile ?? [];

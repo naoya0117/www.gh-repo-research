@@ -34,9 +34,16 @@ export type CheckResult = {
   updatedAt: string;
 };
 
+export type EvaluatedRepositoriesStats = {
+  totalCount: number;
+  webAppCount: number;
+  nonWebAppCount: number;
+};
+
 export type AdminDashboardData = {
   patterns: K8sPattern[];
   repositories: Repository[];
   checkResults: CheckResult[];
   unevaluatedRepositoriesWithDockerfile?: Repository[];
+  evaluatedRepositoriesStats?: EvaluatedRepositoriesStats;
 };
