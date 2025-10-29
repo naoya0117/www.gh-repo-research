@@ -4,7 +4,7 @@ import { AdminDashboardData } from "@/lib/adminTypes";
 import { graphqlRequest } from "@/lib/graphql";
 
 const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
-  query AdminDashboard($limit: Int, $unevaluatedLimit: Int) {
+  query AdminDashboard($limit: Int, $unevaluatedLimit: Int, $recentLimit: Int) {
     adminDashboard(limit: $limit) {
       patterns {
         id
@@ -42,6 +42,16 @@ const ADMIN_DASHBOARD_QUERY = /* GraphQL */ `
       isWebApp
       webAppCheckedAt
     }
+    recentlyEvaluatedRepositories(limit: $recentLimit) {
+      id
+      nameWithOwner
+      stargazerCount
+      primaryLanguage
+      hasDockerfile
+      createdAt
+      isWebApp
+      webAppCheckedAt
+    }
     evaluatedRepositoriesStats {
       totalCount
       webAppCount
@@ -55,17 +65,19 @@ export async function GET() {
     const data = await graphqlRequest<{
       adminDashboard: AdminDashboardData;
       unevaluatedRepositoriesWithDockerfile: AdminDashboardData["repositories"];
+      recentlyEvaluatedRepositories: AdminDashboardData["repositories"];
       evaluatedRepositoriesStats: {
         totalCount: number;
         webAppCount: number;
         nonWebAppCount: number;
       };
-    }>(ADMIN_DASHBOARD_QUERY, { limit: 50, unevaluatedLimit: 50 });
+    }>(ADMIN_DASHBOARD_QUERY, { limit: 50, unevaluatedLimit: 50, recentLimit: 10 });
 
-    // 未評価リポジトリと統計を追加したレスポンスを作成
+    // 未評価リポジトリ、最近評価されたリポジトリ、統計を追加したレスポンスを作成
     const response = {
       ...data.adminDashboard,
       unevaluatedRepositoriesWithDockerfile: data.unevaluatedRepositoriesWithDockerfile,
+      recentlyEvaluatedRepositories: data.recentlyEvaluatedRepositories,
       evaluatedRepositoriesStats: data.evaluatedRepositoriesStats,
     };
 

@@ -45,5 +45,6 @@ export type AdminDashboardData = {
   repositories: Repository[];
   checkResults: CheckResult[];
   unevaluatedRepositoriesWithDockerfile?: Repository[];
+  recentlyEvaluatedRepositories?: Repository[];
   evaluatedRepositoriesStats?: EvaluatedRepositoriesStats;
 };

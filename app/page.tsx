@@ -43,18 +43,8 @@ export default async function AdminPage() {
     loadError = "管理用データの取得に失敗しました";
   }
 
-  const repositories =
-    data?.repositories?.filter((repo) => repo.hasDockerfile) ?? [];
-
-  const evaluatedRepositories = repositories
-    .filter((repo) => repo.isWebApp !== null && repo.isWebApp !== undefined)
-    .sort((a, b) => {
-      // 評価日時の降順（新しい順）でソート
-      const dateA = a.webAppCheckedAt ? new Date(a.webAppCheckedAt).getTime() : 0;
-      const dateB = b.webAppCheckedAt ? new Date(b.webAppCheckedAt).getTime() : 0;
-      return dateB - dateA;
-    })
-    .slice(0, 10);
+  // 新しいAPIから最近評価されたリポジトリを取得
+  const evaluatedRepositories = data?.recentlyEvaluatedRepositories ?? [];
 
   // 統計はAPIから取得した値を使用
   const totalEvaluated = data?.evaluatedRepositoriesStats?.totalCount ?? 0;
